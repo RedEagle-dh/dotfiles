@@ -1,3 +1,4 @@
+cask "jetbrains-toolbox"
 brew "git"
 brew "gh"
 brew "jq"
