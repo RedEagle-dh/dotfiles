@@ -36,7 +36,6 @@ cask "ghostty"
 
 cask "orbstack"
 cask "visual-studio-code"
-cask "tableplus"
 cask "bruno"
 cask "google-chrome"
 cask "lm-studio"
