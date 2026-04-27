@@ -50,3 +50,5 @@ cask "tailscale-app"
 
 # Battery
 cask "aldente"
+cask "whatsapp"
+cask "spotify"
