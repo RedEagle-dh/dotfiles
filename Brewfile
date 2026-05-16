@@ -1,4 +1,5 @@
 cask "jetbrains-toolbox"
+cask "zed"
 brew "git"
 brew "gh"
 brew "jq"
