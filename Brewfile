@@ -1,3 +1,4 @@
+cask "redis-insight"
 cask "jetbrains-toolbox"
 cask "zed"
 brew "git"
