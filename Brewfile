@@ -1,3 +1,4 @@
+brew "awscli"
 cask "redis-insight"
 cask "jetbrains-toolbox"
 cask "zed"
