@@ -1,3 +1,5 @@
+cask "mactex"
+cask "Rohithgilla12/tap/data-peek"
 brew "awscli"
 cask "redis-insight"
 cask "jetbrains-toolbox"
