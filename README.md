@@ -163,9 +163,15 @@ Weil nicht jede Release alles anbietet, werden die Pakete **vor** der
 Installation gegen die Repos geprüft; was fehlt, wird gemeldet statt den Lauf
 abzubrechen. `eza` etwa gibt es erst ab Debian 13.
 
-`starship` und `mise` fehlen in den meisten Distro-Repos oder sind dort veraltet.
-Beide werden über ihre offiziellen Installer nach `~/.local/bin` gelegt — ohne
-root, und der Pfad steht in der `.zshrc` bereits im `PATH`.
+`starship`, `mise` und `eza` fehlen in den meisten Distro-Repos oder sind dort
+veraltet — `eza` gibt es in Debian erst ab 13. Alle drei werden über ihre
+offiziellen Installer bzw. GitHub-Releases nach `~/.local/bin` gelegt: ohne root,
+und der Pfad steht in der `.zshrc` bereits im `PATH`. Für `eza` wird die
+Architektur aus `uname -m` abgeleitet (aarch64, x86_64, armv7).
+
+Klappt das nicht, fallen `ls`, `ll` und `la` auf das eingebaute `ls` zurück —
+mit `--color=auto --group-directories-first` unter GNU coreutils, mit `-G` unter
+BSD. Die Abkürzungen bleiben also in jedem Fall vorhanden.
 
 Debian benennt zwei Binaries um, weil die Namen dort belegt sind: `bat` liegt als
 `batcat`, `fd` als `fdfind`. Die `.zshrc` fängt beides über Aliase ab.

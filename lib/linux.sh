@@ -105,6 +105,36 @@ linux_extras() {
     fi
   fi
 
+  # eza fehlt in Debian vor 13 komplett. Es gibt aber statische Releases.
+  if command -v eza >/dev/null 2>&1; then
+    skip "eza bereits vorhanden"
+  else
+    local arch target
+    arch=$(uname -m)
+    case "$arch" in
+      aarch64|arm64) target=aarch64-unknown-linux-gnu ;;
+      x86_64|amd64)  target=x86_64-unknown-linux-gnu ;;
+      armv7l|armv6l) target=arm-unknown-linux-gnueabihf ;;
+      *)             target='' ;;
+    esac
+
+    if [ -z "$target" ]; then
+      warn "eza: keine passende Binary fuer $arch — uebersprungen"
+    elif [ "${DRY_RUN:-0}" = 1 ]; then
+      info "[dry-run] wuerde eza ($target) nach $bin installieren"
+    else
+      info "Installiere eza ($target) nach $bin"
+      mkdir -p "$bin"
+      if curl -fsSL "https://github.com/eza-community/eza/releases/latest/download/eza_${target}.tar.gz" \
+           | tar xz -C "$bin" ./eza 2>/dev/null; then
+        chmod +x "$bin/eza"
+        ok "eza installiert"
+      else
+        warn "eza-Installation fehlgeschlagen — ls/ll fallen auf coreutils zurueck"
+      fi
+    fi
+  fi
+
   if command -v mise >/dev/null 2>&1; then
     skip "mise bereits vorhanden"
   elif [ "${DRY_RUN:-0}" = 1 ]; then

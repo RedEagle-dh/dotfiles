@@ -80,6 +80,17 @@ if _have eza; then
   alias ll="eza -l  --icons=auto --group-directories-first"          # lang
   alias la="eza -la --icons=auto --group-directories-first"          # lang + versteckt
   alias lt="eza --tree --level=2 --icons=auto"                       # Baum
+else
+  # Kein eza — etwa auf Debian Bookworm, wo es das Paket nicht gibt. Dann auf
+  # das eingebaute ls zurueckfallen, statt ll/la ersatzlos zu verlieren.
+  if ls --group-directories-first --color=auto -d . >/dev/null 2>&1; then
+    alias ls="ls --color=auto --group-directories-first"             # GNU coreutils
+  else
+    alias ls="ls -G"                                                 # BSD / macOS
+  fi
+  alias ll="ls -lh"
+  alias la="ls -lAh"
+  _have tree && alias lt="tree -L 2"
 fi
 
 # Absichtlich KEIN 'alias grep=rg': rg ist nicht flag-kompatibel mit grep
