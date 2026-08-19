@@ -84,28 +84,84 @@ linux_pkgs_pacman() {
 }
 
 # ---------------------------------------------------------------- Extras
-# starship und mise liegen in den meisten Distro-Repos nicht (oder veraltet).
-# Beide bringen offizielle Installer mit, die nach ~/.local/bin schreiben —
-# kein root nötig, und der Pfad steht in der .zshrc bereits im PATH.
+# starship, mise und eza liegen in den meisten Distro-Repos nicht oder sind
+# veraltet (eza fehlt in Debian vor 13 ganz). Alle drei bringen statische
+# Builds mit, die ohne root nach ~/.local/bin gehen — dieser Pfad steht in der
+# .zshrc bereits im PATH.
+#
+# WICHTIG: kein 'curl ... | sh'. Der Exit-Status einer Pipeline ist der ihres
+# LETZTEN Glieds — bei einem 404 bekommt sh leere Eingabe und beendet sich mit
+# 0. Der Fehlschlag saehe dann wie ein Erfolg aus. Deshalb wird erst geladen,
+# geprueft, und dann ausgefuehrt.
+
+# _fetch <label> <url> <ziel> -> laedt herunter und prueft auf nicht-leer
+_fetch() {
+  local label=$1 url=$2 out=$3 log
+  log=$(mktemp) || return 1
+  if ! curl -fsSL "$url" -o "$out" 2>"$log"; then
+    warn "$label: Download fehlgeschlagen — $url"
+    tail -4 "$log" | sed 's/^/      /' >&2
+    rm -f "$log"; return 1
+  fi
+  rm -f "$log"
+  if [ ! -s "$out" ]; then
+    warn "$label: Download war leer — $url"
+    return 1
+  fi
+  return 0
+}
+
+# install_script <label> <url> [argumente fuer das Skript...]
+install_script() {
+  local label=$1 url=$2; shift 2
+  local tmp log rc=0
+  tmp=$(mktemp) || return 1
+  if ! _fetch "$label" "$url" "$tmp"; then rm -f "$tmp"; return 1; fi
+
+  log=$(mktemp)
+  if sh "$tmp" "$@" >"$log" 2>&1; then
+    ok "$label installiert"
+  else
+    warn "$label fehlgeschlagen — letzte Zeilen:"
+    tail -8 "$log" | sed 's/^/      /' >&2
+    rc=1
+  fi
+  rm -f "$tmp" "$log"
+  return $rc
+}
+
+# install_tarball <label> <url> <zielverzeichnis> <element im archiv>
+install_tarball() {
+  local label=$1 url=$2 dest=$3 member=$4
+  local tmp log rc=0
+  tmp=$(mktemp) || return 1
+  if ! _fetch "$label" "$url" "$tmp"; then rm -f "$tmp"; return 1; fi
+
+  log=$(mktemp)
+  if tar xzf "$tmp" -C "$dest" "$member" >"$log" 2>&1; then
+    ok "$label installiert"
+  else
+    warn "$label: Entpacken fehlgeschlagen"
+    tail -6 "$log" | sed 's/^/      /' >&2
+    rc=1
+  fi
+  rm -f "$tmp" "$log"
+  return $rc
+}
+
 linux_extras() {
   local bin="$HOME/.local/bin"
+  mkdir -p "$bin"
 
   if command -v starship >/dev/null 2>&1; then
     skip "starship bereits vorhanden"
   elif [ "${DRY_RUN:-0}" = 1 ]; then
-    info "[dry-run] würde starship nach $bin installieren"
+    info "[dry-run] wuerde starship nach $bin installieren"
   else
     info "Installiere starship nach $bin"
-    mkdir -p "$bin"
-    if curl -fsSL https://starship.rs/install.sh \
-         | sh -s -- --yes --bin-dir "$bin" >/dev/null 2>&1; then
-      ok "starship installiert"
-    else
-      warn "starship-Installation fehlgeschlagen — Prompt bleibt schlicht"
-    fi
+    install_script starship https://starship.rs/install.sh --yes --bin-dir "$bin" || true
   fi
 
-  # eza fehlt in Debian vor 13 komplett. Es gibt aber statische Releases.
   if command -v eza >/dev/null 2>&1; then
     skip "eza bereits vorhanden"
   else
@@ -124,13 +180,12 @@ linux_extras() {
       info "[dry-run] wuerde eza ($target) nach $bin installieren"
     else
       info "Installiere eza ($target) nach $bin"
-      mkdir -p "$bin"
-      if curl -fsSL "https://github.com/eza-community/eza/releases/latest/download/eza_${target}.tar.gz" \
-           | tar xz -C "$bin" ./eza 2>/dev/null; then
+      if install_tarball eza \
+           "https://github.com/eza-community/eza/releases/latest/download/eza_${target}.tar.gz" \
+           "$bin" ./eza; then
         chmod +x "$bin/eza"
-        ok "eza installiert"
       else
-        warn "eza-Installation fehlgeschlagen — ls/ll fallen auf coreutils zurueck"
+        warn "ls/ll fallen auf coreutils zurueck"
       fi
     fi
   fi
@@ -138,15 +193,10 @@ linux_extras() {
   if command -v mise >/dev/null 2>&1; then
     skip "mise bereits vorhanden"
   elif [ "${DRY_RUN:-0}" = 1 ]; then
-    info "[dry-run] würde mise nach $bin installieren"
+    info "[dry-run] wuerde mise nach $bin installieren"
   else
     info "Installiere mise nach $bin"
-    mkdir -p "$bin"
-    if curl -fsSL https://mise.run | MISE_QUIET=1 sh >/dev/null 2>&1; then
-      ok "mise installiert"
-    else
-      warn "mise-Installation fehlgeschlagen"
-    fi
+    MISE_QUIET=1 install_script mise https://mise.run || true
   fi
 }
 

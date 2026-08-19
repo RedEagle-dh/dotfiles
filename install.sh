@@ -68,9 +68,15 @@ bootstrap() {
     # ohne Command Line Tools', kostet aber die git-Historie.
     _warn "git nicht gefunden — lade Tarball statt Clone"
     mkdir -p "$TARGET_DIR"
-    curl -fsSL "https://codeload.github.com/$REPO_SLUG/tar.gz/$REPO_BRANCH" \
-      | tar xz -C "$TARGET_DIR" --strip-components=1 \
-      || _die "Download fehlgeschlagen"
+    # Erst laden, dann entpacken: bei 'curl | tar' zaehlt nur der Status von
+    # tar, ein 404 kaeme als leerer Stream durch.
+    _tb=$(mktemp)
+    curl -fsSL "https://codeload.github.com/$REPO_SLUG/tar.gz/$REPO_BRANCH" -o "$_tb" \
+      || { rm -f "$_tb"; _die "Download fehlgeschlagen"; }
+    [ -s "$_tb" ] || { rm -f "$_tb"; _die "Download war leer"; }
+    tar xzf "$_tb" -C "$TARGET_DIR" --strip-components=1 \
+      || { rm -f "$_tb"; _die "Entpacken fehlgeschlagen"; }
+    rm -f "$_tb"
     _warn "Kein git-Checkout. Später nachholen:"
     _warn "  rm -rf $(_short "$TARGET_DIR") && git clone https://github.com/$REPO_SLUG.git $(_short "$TARGET_DIR")"
   fi
