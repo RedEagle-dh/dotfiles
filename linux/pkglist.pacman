@@ -1,0 +1,29 @@
+# Arch / Manjaro
+#
+# Hier heißen die Pakete weitgehend wie die Binaries.
+
+# Shell
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+
+# Grundlagen
+git
+curl
+less
+
+# CLI
+ripgrep
+fd
+bat
+fzf
+zoxide
+direnv
+jq
+tree
+htop
+micro
+shellcheck
+httpie
+eza
+starship

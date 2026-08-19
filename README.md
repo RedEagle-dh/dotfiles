@@ -38,6 +38,7 @@ schon da, wird es aktualisiert statt neu geklont. Vorhandene Dateien werden nie
 | `--dry-run` | nichts verändern, nur anzeigen |
 | `--no-link` | Symlinks überspringen |
 | `--no-packages` | Paketinstallation überspringen |
+| `--no-shell` | Login-Shell nicht auf zsh umstellen und nicht hineinwechseln |
 
 `--upgrade` ist bewusst **nicht** der Standard: auf einer eingerichteten Maschine
 zieht ein vollständiges Brew-Upgrade schnell dutzende Pakete hoch und kann
@@ -57,13 +58,37 @@ DOTFILES_DIR=~/dev/dotfiles ./install.sh          # anderes Zielverzeichnis
 DOTFILES_REMOTE=git@github.com:me/dotfiles.git ./install.sh   # via SSH
 ```
 
+## Login-Shell
+
+Zum Schluss stellt `install.sh` zsh als Login-Shell ein und **wechselt direkt
+hinein** — kein Aus- und Wiedereinloggen nötig. `exit` bringt dich zurück in die
+vorherige Shell.
+
+Das ist vor allem auf Linux relevant: macOS nutzt zsh seit Catalina ohnehin,
+Debian und Raspberry Pi OS starten dagegen mit bash. Ohne diesen Schritt liegen
+die Symlinks zwar richtig, werden aber von niemandem gelesen.
+
+Im Einzelnen:
+
+- `chsh` auf das gefundene `zsh`, aber nur wenn es nicht ohnehin schon gesetzt ist
+- fehlt der Pfad in `/etc/shells`, wird er vorher ergänzt — `chsh` akzeptiert
+  sonst nichts, was dort nicht steht (betrifft zsh aus Homebrew)
+- scheitert `chsh` an der PAM-Konfiguration, folgt ein Versuch über `sudo`;
+  klappt auch das nicht, gibt es den fertigen Befehl zum Selbstausführen
+- der abschließende Wechsel unterbleibt ohne echtes Terminal (CI, Docker-Build)
+  und wenn der Aufruf ohnehin schon aus einer zsh kommt
+
+Mit `--no-shell` bleibt beides aus.
+
 ## Aufbau
 
 ```
 install.sh              Einstiegspunkt: Bootstrap, OS-Erkennung, Symlinks, Pakete
 lib/common.sh           Logging, Symlink-Helfer mit Backup, OS-Erkennung
 lib/macos.sh            Homebrew + Brewfiles
-lib/linux.sh            Gerüst — siehe linux/README.md
+lib/linux.sh            apt- und pacman-Zweig, Extras, Desktop-Hook
+linux/pkglist.apt       Paketliste Debian/Ubuntu/Raspberry Pi OS
+linux/pkglist.pacman    Paketliste Arch
 macos/Brewfile.core     CLI-Basis — immer
 macos/Brewfile.extra    GUI-Apps, schwere Toolchains — nur mit --extra
 zsh/.zshrc              interaktive Shell
@@ -133,10 +158,18 @@ brew bundle check --file macos/Brewfile.core --verbose
 
 ## Linux
 
-Gerüst vorhanden, Inhalte offen. `lib/linux.sh` erkennt Distro und Paketmanager
-(pacman / apt / dnf / zypper / apk); die beiden Hooks für Basis-Pakete und
-Hyprland sind dokumentiert, aber leer. Siehe `linux/README.md`.
+Paketinstallation über `apt-get` und `pacman`, Listen unter `linux/pkglist.*`.
+Weil nicht jede Release alles anbietet, werden die Pakete **vor** der
+Installation gegen die Repos geprüft; was fehlt, wird gemeldet statt den Lauf
+abzubrechen. `eza` etwa gibt es erst ab Debian 13.
 
-Die `.zshrc` ist bereits plattformübergreifend — Homebrew wird auch unter
-`/home/linuxbrew` gefunden, zsh-Plugins zusätzlich unter `/usr/share/zsh/plugins`.
-Ungetestet, mangels Linux-Maschine.
+`starship` und `mise` fehlen in den meisten Distro-Repos oder sind dort veraltet.
+Beide werden über ihre offiziellen Installer nach `~/.local/bin` gelegt — ohne
+root, und der Pfad steht in der `.zshrc` bereits im `PATH`.
+
+Debian benennt zwei Binaries um, weil die Namen dort belegt sind: `bat` liegt als
+`batcat`, `fd` als `fdfind`. Die `.zshrc` fängt beides über Aliase ab.
+
+Offen ist der Desktop-Teil: der `--desktop`-Hook in `lib/linux.sh` ist
+dokumentiert, aber leer. Configs gehören nach `linux/config/`, die Symlinks in
+`link_dotfiles()` in `install.sh` — die Stelle ist dort kommentiert.

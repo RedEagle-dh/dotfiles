@@ -110,6 +110,7 @@ WITH_DESKTOP=0
 WITH_UPGRADE=0
 DO_LINK=1
 DO_PACKAGES=1
+DO_SHELL=1
 
 usage() {
   cat <<'USAGE'
@@ -121,6 +122,7 @@ Verwendung: install.sh [Optionen]
   --dry-run      nichts verändern, nur anzeigen
   --no-link      Symlinks überspringen
   --no-packages  Paketinstallation überspringen
+  --no-shell     Login-Shell nicht auf zsh umstellen und nicht hineinwechseln
   -h, --help     diese Hilfe
 
 Umgebungsvariablen:
@@ -142,12 +144,13 @@ while [ $# -gt 0 ]; do
     --dry-run)     DRY_RUN=1 ;;
     --no-link)     DO_LINK=0 ;;
     --no-packages) DO_PACKAGES=0 ;;
+    --no-shell)    DO_SHELL=0 ;;
     -h|--help)     usage; exit 0 ;;
     *)             err "Unbekannte Option: $1"; echo; usage; exit 1 ;;
   esac
   shift
 done
-export BACKUP_DIR DRY_RUN WITH_EXTRA WITH_DESKTOP WITH_UPGRADE
+export BACKUP_DIR DRY_RUN WITH_EXTRA WITH_DESKTOP WITH_UPGRADE DO_SHELL
 
 # ---------------------------------------------------------------- Symlinks
 # Alles, was auf jedem Betriebssystem gleich ist.
@@ -162,6 +165,31 @@ link_dotfiles() {
 
   # Hier später OS-spezifische Configs ergänzen, z.B.
   #   [ "$OS" = linux ] && link_file "$DOTFILES/linux/config/hypr" "$HOME/.config/hypr"
+}
+
+# ---------------------------------------------------------------- Shellwechsel
+# Wechselt zum Schluss direkt in die neue Shell, damit man nicht erst
+# aus- und wieder einloggen muss. Ersetzt per exec den Installer-Prozess.
+launch_zsh() {
+  local target parent
+  target=$(command -v zsh) || return 0
+
+  # Läuft der Aufruf schon aus einer zsh? Dann wäre ein weiteres Login
+  # nur eine überflüssige Verschachtelung.
+  parent=$(ps -o comm= -p "$PPID" 2>/dev/null | sed 's|^-||; s|.*/||')
+  if [ "$parent" = zsh ]; then
+    skip "läuft bereits unter zsh"
+    return 0
+  fi
+
+  # Ohne echtes Terminal (CI, Docker-Build) darf hier nichts Interaktives starten.
+  if [ ! -t 0 ] || [ ! -t 1 ]; then
+    info "Neue Shell starten oder 'exec zsh -l' ausführen."
+    return 0
+  fi
+
+  info "Wechsle in zsh — 'exit' bringt dich zurück nach $parent"
+  exec "$target" -l
 }
 
 # ---------------------------------------------------------------- Ablauf
@@ -185,10 +213,19 @@ main() {
     skip "Pakete übersprungen (--no-packages)"
   fi
 
+  if [ "$DO_SHELL" = 1 ]; then
+    ensure_default_shell
+  else
+    skip "Login-Shell unverändert (--no-shell)"
+  fi
+
   echo
   ok "Fertig."
   [ -d "$BACKUP_DIR" ] && info "Ersetzte Dateien liegen in $(shorten "$BACKUP_DIR")"
-  info "Neue Shell starten oder 'exec zsh' ausführen."
+
+  if [ "$DO_SHELL" = 1 ] && [ "$DRY_RUN" != 1 ]; then
+    launch_zsh
+  fi
 }
 
 main "$@"

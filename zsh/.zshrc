@@ -69,7 +69,14 @@ fi
 # Absichtlich KEIN 'alias grep=rg': rg ist nicht flag-kompatibel mit grep
 # (-r heißt Replace statt Recursive, BRE fehlt, .gitignore wird respektiert).
 # rg direkt aufrufen, grep bleibt grep.
-_have bat && alias cat="bat"
+# Debian benennt beide Binaries um, weil die Namen dort schon belegt sind:
+# bat -> batcat (Konflikt mit bacula), fd -> fdfind (Konflikt mit fdclone).
+if _have bat; then
+  alias cat="bat"
+elif _have batcat; then
+  alias cat="batcat"
+fi
+_have fdfind && ! _have fd && alias fd="fdfind"
 
 alias k="kubectl"
 alias ..="cd .."

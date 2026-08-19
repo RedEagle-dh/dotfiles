@@ -83,3 +83,69 @@ link_file() {
 
 # Kürzt $HOME zu ~, damit die Ausgabe lesbar bleibt.
 shorten() { printf '%s' "${1/#$HOME/\~}"; }
+
+# ---------------------------------------------------------------- Rechte
+# Leer, wenn wir ohnehin root sind — sonst sudo. So funktionieren die
+# Paket-Aufrufe in beiden Fällen ohne Sonderbehandlung.
+sudo_cmd() {
+  if [ "$(id -u)" = 0 ]; then printf ''; else printf 'sudo'; fi
+}
+
+# ---------------------------------------------------------------- Login-Shell
+# Liest die eingetragene Login-Shell — nicht $SHELL, das ist nur geerbt und
+# lügt in genau dem Moment, in dem man es wissen will.
+current_login_shell() {
+  local s=''
+  if command -v getent >/dev/null 2>&1; then
+    s=$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7)
+  fi
+  if [ -z "$s" ] && [ "$(uname -s)" = Darwin ]; then
+    s=$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}')
+  fi
+  [ -z "$s" ] && s="${SHELL:-}"
+  printf '%s' "$s"
+}
+
+# Sorgt dafür, dass zsh die Login-Shell ist. Idempotent.
+ensure_default_shell() {
+  local target current sudo_
+  sudo_=$(sudo_cmd)
+
+  if ! target=$(command -v zsh); then
+    warn "zsh ist nicht installiert — Login-Shell bleibt unverändert"
+    return 0
+  fi
+
+  current=$(current_login_shell)
+  if [ "$current" = "$target" ]; then
+    skip "Login-Shell ist bereits $target"
+    return 0
+  fi
+
+  info "Login-Shell: $current -> $target"
+  if [ "${DRY_RUN:-0}" = 1 ]; then
+    info "[dry-run] würde chsh ausführen"
+    return 0
+  fi
+
+  # chsh akzeptiert nur Shells aus /etc/shells. Bei zsh aus Homebrew oder
+  # /usr/local fehlt der Eintrag oft.
+  if [ -r /etc/shells ] && ! grep -qxF "$target" /etc/shells; then
+    info "$target fehlt in /etc/shells — trage nach (benötigt sudo)"
+    printf '%s\n' "$target" | $sudo_ tee -a /etc/shells >/dev/null \
+      || { warn "Eintrag in /etc/shells fehlgeschlagen — chsh übersprungen"; return 0; }
+  fi
+
+  # Kann nach dem Passwort fragen; deshalb hängt stdin im Bootstrap am Terminal.
+  if chsh -s "$target" 2>/dev/null; then
+    ok "Login-Shell gesetzt"
+  elif $sudo_ chsh -s "$target" "$(id -un)" 2>/dev/null; then
+    # Manche PAM-Konfigurationen lassen chsh nur mit erhöhten Rechten zu.
+    ok "Login-Shell gesetzt (via sudo)"
+  else
+    warn "chsh fehlgeschlagen. Von Hand:  sudo chsh -s $target $(id -un)"
+    return 0
+  fi
+
+  warn "Wirkt erst bei der nächsten Login-Session (bei SSH: neu verbinden)."
+}

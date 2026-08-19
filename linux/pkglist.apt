@@ -1,0 +1,30 @@
+# Debian / Ubuntu / Raspberry Pi OS
+#
+# Paketnamen weichen hier von den Homebrew-Namen ab. Was fehlt, wird vor der
+# Installation aussortiert und gemeldet — je nach Release ist nicht alles da.
+
+# Shell
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+
+# Grundlagen
+git
+curl
+ca-certificates
+less
+
+# CLI
+ripgrep
+fd-find            # liefert 'fdfind', nicht 'fd' (Namenskonflikt in Debian)
+bat                # liefert 'batcat', nicht 'bat' (dito)
+fzf
+zoxide
+direnv
+jq
+tree
+htop
+micro
+shellcheck
+httpie
+eza                # erst ab Debian 13 (Trixie) — auf Bookworm nicht vorhanden
