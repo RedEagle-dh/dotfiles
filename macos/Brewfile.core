@@ -1,0 +1,31 @@
+# Kern-Pakete — läuft auf jeder Maschine, direkt nach dem Aufsetzen.
+# Alles hier ist entweder CLI-Grundausstattung oder wird von der .zshrc
+# tatsächlich benutzt. Bewusst klein gehalten: schnell installiert.
+
+# --- Shell (Abhängigkeiten der .zshrc) ---
+brew "starship"                  # Prompt
+brew "zsh-autosuggestions"       # History-Vorschläge inline
+brew "zsh-syntax-highlighting"   # Tippfehler vor dem Enter sichtbar
+brew "zoxide"                    # smarter cd
+brew "fzf"                       # Fuzzy-Finder + Ctrl-R
+brew "direnv"                    # .envrc pro Projekt
+brew "mise"                      # Laufzeit-/Toolchain-Versionen
+
+# --- CLI-Grundausstattung ---
+brew "git"
+brew "gh"
+brew "ripgrep"                   # rg
+brew "fd"
+brew "bat"
+brew "eza"
+brew "jq"
+brew "yq"
+brew "tree"
+brew "watch"
+brew "micro"                     # schneller Terminal-Editor
+
+# --- Entwicklung, täglich ---
+brew "lazygit"
+brew "httpie"
+brew "shellcheck"
+brew "tokei"

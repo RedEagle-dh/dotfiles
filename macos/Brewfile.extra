@@ -1,0 +1,89 @@
+# Zusatz-Pakete — mit `./install.sh --extra`.
+# Alles, was eine frische Maschine nicht sofort braucht: GUI-Apps,
+# schwere Toolchains, Spezialwerkzeug.
+
+# --- Fremd-Taps (müssen vor den casks stehen, die sie brauchen) ---
+tap "rohithgilla12/tap"   # liefert data-peek
+
+# --- Kubernetes / Container ---
+brew "kubernetes-cli"            # stellt kubectl bereit (Alias: kubectl)
+brew "helm"
+brew "helmfile"
+brew "k9s"
+brew "kind"
+brew "stern"
+brew "kubectx"
+brew "kn"                        # Knative-CLI
+brew "docker"
+brew "dive"
+brew "hadolint"
+
+# --- Cloud / Secrets / Security ---
+brew "awscli"
+brew "openstackclient"
+brew "stripe-cli"
+brew "sops"
+brew "age"
+brew "gnupg"
+brew "trivy"
+brew "actionlint"
+brew "mcp-grafana"
+
+# --- Toolchains / Build ---
+brew "cmake"
+brew "rustup"                    # rust-Toolchain-Manager
+brew "protobuf"
+brew "pipx"
+brew "xcodegen"
+brew "cocoapods"
+
+# --- Medien / Dateien ---
+brew "ffmpeg"
+brew "exiftool"
+brew "jpeg-xl"
+brew "poppler"
+
+# --- Netzwerk / System ---
+brew "nmap"
+brew "iperf3"
+brew "lftp"
+brew "smartmontools"
+brew "k6"                        # Lasttests
+brew "librealsense"
+
+# --- KI / LLM ---
+brew "ollama"
+brew "opencode"
+brew "omp"
+
+# --- Terminal & Editoren ---
+cask "ghostty"
+cask "visual-studio-code"
+cask "zed"
+cask "jetbrains-toolbox"
+
+# --- Entwicklung, GUI ---
+cask "orbstack"
+cask "bruno"                     # API-Client
+cask "tableplus"                 # SQL-GUI
+cask "redis-insight"
+cask "data-peek"
+cask "lm-studio"
+
+# --- Produktivität ---
+cask "raycast"
+cask "linear"
+cask "karabiner-elements"        # Tastatur-Remapping
+cask "voxtype"
+
+# --- Netzwerk ---
+cask "tailscale-app"
+
+# --- System / Alltag ---
+cask "aldente"                   # Ladeschwelle Akku
+cask "google-chrome"
+cask "whatsapp"
+cask "spotify"
+
+# --- Satz / TeX (groß, mehrere GB) ---
+cask "mactex"
