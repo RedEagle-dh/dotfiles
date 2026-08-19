@@ -74,6 +74,14 @@ if _have fzf; then
   unset _fzf_init
 fi
 
+# mise stellt seine Toolchain-Verzeichnisse (GOPATH/bin & Co.) ganz nach vorn.
+# Deshalb ~/.local/bin danach erneut voranstellen: dort liegen die bewusst
+# installierten Werkzeuge (starship, eza, lazyports), und die sollen Vorrang
+# vor Altlasten haben — ein vergessenes 'go install' in GOPATH/bin wuerde
+# sonst unseren Build verdecken. 'typeset -U' verschiebt den Eintrag dabei,
+# statt ihn zu doppeln.
+[[ -d $HOME/.local/bin ]] && path=("$HOME/.local/bin" $path)
+
 # ---------------------------------------------------------------- Aliase
 if _have eza; then
   alias ls="eza --icons=auto --group-directories-first"

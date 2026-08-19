@@ -58,6 +58,36 @@ DOTFILES_DIR=~/dev/dotfiles ./install.sh          # anderes Zielverzeichnis
 DOTFILES_REMOTE=git@github.com:me/dotfiles.git ./install.sh   # via SSH
 ```
 
+## Aus dem Quelltext gebaut
+
+Manche Werkzeuge gibt es in keinem Paketmanager. `lib/tools.sh` baut sie auf
+**beiden** Systemen — es haengt nicht an Brewfile oder pkglist.
+
+**lazyports** — TUI zum Anzeigen und Beenden von Prozessen auf Netzwerkports.
+Gebaut aus dem eigenen Fork `RedEagle-dh/LazyPorts`, nicht aus upstream: der
+Fork traegt den Commit *"Adding macos compatibility and improve multi-socket
+visualization"*.
+
+Zwei Fallstricke, die den naheliegenden Weg ausschliessen:
+
+- `go install github.com/RedEagle-dh/LazyPorts@main` **kann nicht klappen**. Die
+  `go.mod` des Forks deklariert weiterhin den Upstream-Pfad
+  `github.com/v9mirza/lazyports`, und Go besteht darauf, dass Modulpfad und
+  Bezugspfad uebereinstimmen. Also: klonen nach `~/.cache/dotfiles/` und lokal
+  bauen.
+- Das mitgelieferte `install.sh` des Projekts wird bewusst **nicht** benutzt. Es
+  installiert upstream statt des Forks, kopiert per `sudo` nach
+  `/usr/local/bin` und haengt eine PATH-Zeile an `~/.zshrc` — hier ein Symlink
+  ins Repo, den es damit verschmutzen wuerde.
+
+Die Toolchain: ist ein `go` ab 1.21 vorhanden, wird es benutzt (ab 1.21 laedt
+Go fehlende Versionen laut `toolchain`-Direktive selbst nach). Sonst springt
+`mise exec go@latest` ein — noetig auf Debian Bookworm, dessen `golang-go` fuer
+die `go.mod` zu alt ist. Der erste Lauf laedt dort eine komplette Go-Toolchain
+und dauert entsprechend.
+
+Ein zweites Mal gebaut wird nur mit `--upgrade`.
+
 ## Login-Shell
 
 Zum Schluss stellt `install.sh` zsh als Login-Shell ein und **wechselt direkt
@@ -87,6 +117,7 @@ install.sh              Einstiegspunkt: Bootstrap, OS-Erkennung, Symlinks, Paket
 lib/common.sh           Logging, Symlink-Helfer mit Backup, OS-Erkennung
 lib/macos.sh            Homebrew + Brewfiles
 lib/linux.sh            apt- und pacman-Zweig, Extras, Desktop-Hook
+lib/tools.sh            aus dem Quelltext gebaute Werkzeuge (beide Systeme)
 linux/pkglist.apt       Paketliste Debian/Ubuntu/Raspberry Pi OS
 linux/pkglist.pacman    Paketliste Arch
 macos/Brewfile.core     CLI-Basis — immer

@@ -215,6 +215,9 @@ main() {
       macos) . "$DOTFILES/lib/macos.sh"; install_packages_macos ;;
       linux) . "$DOTFILES/lib/linux.sh"; install_packages_linux ;;
     esac
+    # Aus dem Quelltext gebaute Werkzeuge — auf beiden Systemen gleich.
+    # shellcheck source=lib/tools.sh
+    . "$DOTFILES/lib/tools.sh"; install_source_tools
   else
     skip "Pakete übersprungen (--no-packages)"
   fi

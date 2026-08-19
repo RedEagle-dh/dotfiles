@@ -24,6 +24,9 @@ brew "tree"
 brew "watch"
 brew "micro"                     # schneller Terminal-Editor
 
+# --- Toolchains, die die Kernwerkzeuge brauchen ---
+brew "go"                        # baut lazyports (siehe lib/tools.sh)
+
 # --- Entwicklung, täglich ---
 brew "lazygit"
 brew "httpie"
