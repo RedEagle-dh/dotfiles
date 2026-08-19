@@ -56,7 +56,23 @@ _have starship && eval "$(starship init zsh)"
 _have zoxide   && eval "$(zoxide init zsh)"
 _have mise     && eval "$(mise activate zsh)"
 _have direnv   && eval "$(direnv hook zsh)"
-_have fzf      && source <(fzf --zsh)
+
+# fzf: '--zsh' gibt es erst ab 0.48. Debian Bookworm liefert 0.38, dort liegen
+# die Integrationen stattdessen als Beispieldateien unter /usr/share/doc.
+if _have fzf; then
+  if _fzf_init=$(fzf --zsh 2>/dev/null); then
+    eval "$_fzf_init"
+  else
+    for _fzf in /usr/share/doc/fzf/examples/key-bindings.zsh \
+                /usr/share/doc/fzf/examples/completion.zsh \
+                /usr/share/fzf/key-bindings.zsh \
+                /usr/share/fzf/completion.zsh; do
+      [[ -r $_fzf ]] && source "$_fzf"
+    done
+    unset _fzf
+  fi
+  unset _fzf_init
+fi
 
 # ---------------------------------------------------------------- Aliase
 if _have eza; then

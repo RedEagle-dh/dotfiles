@@ -97,7 +97,7 @@ linux_extras() {
   else
     info "Installiere starship nach $bin"
     mkdir -p "$bin"
-    if curl -fsSL https://starship.rs/install/install.sh \
+    if curl -fsSL https://starship.rs/install.sh \
          | sh -s -- --yes --bin-dir "$bin" >/dev/null 2>&1; then
       ok "starship installiert"
     else

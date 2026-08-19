@@ -136,14 +136,29 @@ ensure_default_shell() {
       || { warn "Eintrag in /etc/shells fehlgeschlagen — chsh übersprungen"; return 0; }
   fi
 
-  # Kann nach dem Passwort fragen; deshalb hängt stdin im Bootstrap am Terminal.
-  if chsh -s "$target" 2>/dev/null; then
+  local user; user=$(id -un)
+
+  # Reihenfolge mit Bedacht: sind die sudo-Credentials vom Paket-Schritt noch
+  # gecacht, laeuft das hier ohne jede Rueckfrage durch.
+  if [ -n "$sudo_" ] && sudo -n true 2>/dev/null; then
+    if sudo chsh -s "$target" "$user"; then
+      ok "Login-Shell gesetzt"
+      warn "Wirkt erst bei der naechsten Login-Session (bei SSH: neu verbinden)."
+      return 0
+    fi
+  fi
+
+  # WICHTIG: stderr hier NICHT unterdruecken. chsh schreibt seinen
+  # Passwort-Prompt dorthin — nach /dev/null umgeleitet wartet das Script
+  # sichtbar auf nichts und sieht aus, als haenge es.
+  info "chsh fragt jetzt nach deinem Passwort"
+  if chsh -s "$target"; then
     ok "Login-Shell gesetzt"
-  elif $sudo_ chsh -s "$target" "$(id -un)" 2>/dev/null; then
-    # Manche PAM-Konfigurationen lassen chsh nur mit erhöhten Rechten zu.
+  elif [ -n "$sudo_" ] && sudo chsh -s "$target" "$user"; then
+    # Manche PAM-Konfigurationen lassen chsh nur mit erhoehten Rechten zu.
     ok "Login-Shell gesetzt (via sudo)"
   else
-    warn "chsh fehlgeschlagen. Von Hand:  sudo chsh -s $target $(id -un)"
+    warn "chsh fehlgeschlagen. Von Hand:  sudo chsh -s $target $user"
     return 0
   fi
 
